@@ -3,754 +3,591 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>철거의정석 · 고객 알림톡 자동화 시스템</title>
-<meta name="description" content="철거의정석 내부 전용 레퍼런스 — 고객 알림톡 자동화 시스템(접수부터 평가까지 10단계 자동 안내)" />
-
+<title>철거의정석 · 고객/현장 관리 대시보드</title>
+<meta name="description" content="철거의정석 내부 전용 고객·현장 관리 대시보드 (알림톡 10단계 진행 관리)" />
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-
 <style>
   :root{
-    --bg:#0E1733;
-    --panel:#1A2A57;
-    --panel-2:#243B73;
-    --brand:#304CFE;
-    --gold:#E9B949;
-    --text:#FFFFFF;
-    --muted:#AEBEEA;
-    --border:rgba(174,190,234,.16);
-    --border-strong:rgba(174,190,234,.28);
-    --shadow:0 8px 28px rgba(0,0,0,.28);
-    --radius:16px;
-    --radius-sm:12px;
-    --maxw:1120px;
+    --bg:#0E1733; --panel:#1A2A57; --panel-2:#243B73;
+    --brand:#304CFE; --gold:#E9B949; --text:#FFFFFF; --muted:#AEBEEA;
+    --border:rgba(174,190,234,.16); --border-strong:rgba(174,190,234,.28);
+    --shadow:0 8px 28px rgba(0,0,0,.28); --radius:14px; --radius-sm:10px;
+    --ok:#3DD68C; --warn:#E9B949; --danger:#F2617A;
   }
-
   *{box-sizing:border-box;}
-  html{scroll-behavior:smooth;}
-  body{
-    margin:0;
-    background:var(--bg);
-    color:var(--text);
-    font-family:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,
-                "Apple SD Gothic Neo","Malgun Gothic","\B9D1\C740 \ACE0\B515",system-ui,sans-serif;
-    line-height:1.65;
-    -webkit-font-smoothing:antialiased;
-    letter-spacing:-0.01em;
-  }
-  a{color:inherit;text-decoration:none;}
-  h1,h2,h3,h4{margin:0;line-height:1.3;letter-spacing:-0.02em;}
-  p{margin:0;}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    line-height:1.55;-webkit-font-smoothing:antialiased;letter-spacing:-0.01em;}
+  h1,h2,h3,h4{margin:0;letter-spacing:-0.02em;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
   ::selection{background:rgba(48,76,254,.4);}
 
-  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;}
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(14,23,51,.9);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);}
+  .topbar-in{max-width:1280px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px;white-space:nowrap;}
+  .logo .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 4px rgba(48,76,254,.18);}
+  .logo small{font-weight:600;color:var(--muted);font-size:12.5px;margin-left:2px;}
+  .spacer{flex:1;}
 
-  .nav{
-    position:sticky;top:0;z-index:100;
-    background:rgba(14,23,51,.82);
-    backdrop-filter:saturate(140%) blur(12px);
-    -webkit-backdrop-filter:saturate(140%) blur(12px);
-    border-bottom:1px solid var(--border);
-  }
-  .nav-inner{display:flex;align-items:center;justify-content:space-between;height:62px;gap:16px;}
-  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;white-space:nowrap;}
-  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 4px rgba(48,76,254,.18);}
-  .nav-links{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;}
-  .nav-links::-webkit-scrollbar{display:none;}
-  .nav-links a{
-    font-size:13.5px;color:var(--muted);padding:7px 11px;border-radius:8px;white-space:nowrap;
-    transition:.18s color,.18s background;
-  }
-  .nav-links a:hover{color:#fff;background:rgba(36,59,115,.6);}
+  .btn{border:1px solid var(--border-strong);background:var(--panel);color:#fff;
+    padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:600;transition:.15s;white-space:nowrap;}
+  .btn:hover{background:var(--panel-2);}
+  .btn.primary{background:var(--brand);border-color:var(--brand);}
+  .btn.primary:hover{filter:brightness(1.1);}
+  .btn.ghost{background:transparent;}
+  .btn.sm{padding:6px 10px;font-size:12.5px;border-radius:8px;}
+  .btn.danger{color:var(--danger);border-color:rgba(242,97,122,.4);}
+  .btn.danger:hover{background:rgba(242,97,122,.12);}
 
-  section{padding:74px 0;border-top:1px solid rgba(174,190,234,.07);}
-  section:first-of-type{border-top:0;}
-  .kicker{
-    font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
-    color:var(--gold);margin-bottom:10px;
-  }
-  .sec-title{font-size:clamp(22px,3.4vw,30px);font-weight:700;margin-bottom:14px;}
-  .sec-desc{color:var(--muted);max-width:760px;font-size:15.5px;}
-  .sec-head{margin-bottom:34px;}
+  .wrap{max-width:1280px;margin:0 auto;padding:24px;}
 
-  .hero{padding:92px 0 70px;}
-  .hero .tag{
-    display:inline-block;font-size:12.5px;font-weight:600;color:var(--muted);
-    border:1px solid var(--border-strong);border-radius:999px;padding:6px 14px;margin-bottom:22px;
-  }
-  .hero h1{font-size:clamp(28px,5vw,46px);font-weight:800;line-height:1.2;}
-  .hero .sub{margin-top:16px;font-size:clamp(15px,2.4vw,19px);color:var(--muted);max-width:620px;}
-  .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px;}
-  .chip{
-    font-size:13px;color:var(--muted);background:var(--panel);
-    border:1px solid var(--border);border-radius:10px;padding:8px 13px;
-  }
-  .chip b{color:#fff;font-weight:600;}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);}
+  .stat .lbl{font-size:12.5px;color:var(--muted);font-weight:600;}
+  .stat .val{font-size:30px;font-weight:800;margin-top:6px;line-height:1;}
+  .stat.wait .val{color:var(--gold);}
+  .stat.done .val{color:var(--ok);}
 
-  .grid{display:grid;gap:18px;}
-  .g-3{grid-template-columns:repeat(3,1fr);}
-  .g-2{grid-template-columns:repeat(2,1fr);}
-  .card{
-    background:var(--panel);
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    padding:24px;
-    box-shadow:var(--shadow);
-  }
-  .card h3{font-size:17px;margin-bottom:8px;}
-  .card p{color:var(--muted);font-size:14.5px;}
-  .card .num{
-    display:inline-flex;align-items:center;justify-content:center;
-    width:34px;height:34px;border-radius:10px;
-    background:var(--panel-2);color:var(--gold);font-weight:700;font-size:15px;margin-bottom:14px;
-    border:1px solid var(--border);
-  }
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+  .field{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+    padding:9px 12px;color:#fff;font-size:13.5px;outline:none;}
+  .field:focus{border-color:var(--brand);}
+  input.field::placeholder{color:rgba(174,190,234,.6);}
+  select.field{cursor:pointer;}
+  .search{min-width:240px;flex:1;max-width:360px;}
 
-  .timeline{display:grid;gap:14px;}
-  .step{
-    display:grid;grid-template-columns:54px 1fr;gap:18px;align-items:start;
-    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
-    padding:20px 22px;box-shadow:var(--shadow);
-  }
-  .step .badge{
-    width:46px;height:46px;border-radius:12px;background:var(--brand);
-    color:#fff;font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center;
-    box-shadow:0 4px 14px rgba(48,76,254,.4);
-  }
-  .step .body{min-width:0;}
-  .step .stitle{font-size:16px;font-weight:700;display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
-  .step .flow{
-    display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;font-size:13.5px;
-  }
-  .step .flow .pill{
-    background:var(--panel-2);border:1px solid var(--border);border-radius:9px;
-    padding:6px 11px;color:var(--muted);
-  }
-  .step .flow .pill .lbl{color:var(--gold);font-weight:600;margin-right:6px;font-size:11.5px;letter-spacing:.04em;}
-  .step .flow .pill b{color:#fff;font-weight:500;}
-  .resp-badge{
-    font-size:11px;font-weight:700;color:#fff;background:var(--brand);
-    border-radius:6px;padding:3px 8px;letter-spacing:.02em;
-  }
-
-  .kakao-shell{
-    max-width:420px;margin:0 auto;border-radius:22px;overflow:hidden;
-    border:1px solid var(--border-strong);box-shadow:0 16px 50px rgba(0,0,0,.45);
-    background:#B2C7DA;
-  }
-  .kakao-top{background:#E9B949;color:#3a2e00;}
-  .kakao-top-bar{display:flex;align-items:center;gap:10px;padding:14px 16px;font-weight:700;font-size:15px;}
-  .kakao-top-bar .k-ico{width:26px;height:26px;border-radius:8px;background:#3a2e00;color:#E9B949;
-    display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;}
-  .kakao-body{padding:16px 14px 22px;max-height:640px;overflow-y:auto;background:#B2C7DA;}
-  .k-date{text-align:center;margin:6px 0 16px;}
-  .k-date span{background:rgba(0,0,0,.18);color:#fff;font-size:11.5px;padding:4px 12px;border-radius:999px;}
-  .k-msg{display:flex;gap:9px;margin-bottom:16px;align-items:flex-start;}
-  .k-stepnum{
-    flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--brand);
-    color:#fff;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
-    margin-top:2px;box-shadow:0 2px 6px rgba(0,0,0,.25);
-  }
-  .k-card{background:#fff;color:#1d1d1f;border-radius:4px 16px 16px 16px;
-    padding:0;max-width:290px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.15);}
-  .k-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;
-    padding:11px 14px 9px;border-bottom:1px solid #eee;}
-  .k-card-head .t{font-size:13.5px;font-weight:700;color:#111;}
-  .k-resp-tag{font-size:10.5px;font-weight:700;color:#fff;background:var(--brand);border-radius:5px;padding:2px 7px;}
-  .k-card-body{padding:11px 14px 13px;font-size:13.5px;color:#333;line-height:1.55;}
-  .k-btns{border-top:1px solid #eee;display:flex;flex-direction:column;}
-  .k-btn{padding:11px 14px;font-size:13px;color:var(--brand);font-weight:600;text-align:center;}
-  .k-btn + .k-btn{border-top:1px solid #f0f0f0;}
-  .k-time{font-size:10.5px;color:rgba(0,0,0,.45);align-self:flex-end;margin-bottom:3px;}
-
-  .acc{display:grid;gap:12px;}
-  .acc-item{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
-    box-shadow:var(--shadow);overflow:hidden;}
-  .acc-head{
-    width:100%;display:flex;align-items:center;gap:14px;padding:18px 22px;cursor:pointer;
-    background:none;border:0;color:inherit;text-align:left;font-family:inherit;
-  }
-  .acc-head .anum{
-    width:32px;height:32px;flex:0 0 auto;border-radius:9px;background:var(--brand);color:#fff;
-    font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;
-  }
-  .acc-head .ttl{flex:1;font-size:15.5px;font-weight:700;display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
-  .acc-head .chev{color:var(--muted);transition:.25s transform;font-size:14px;}
-  .acc-item.open .chev{transform:rotate(180deg);}
-  .acc-panel{max-height:0;overflow:hidden;transition:max-height .3s ease;}
-  .acc-body{padding:0 22px 22px 68px;}
-  .tpl-msg{
-    background:var(--panel-2);border:1px solid var(--border);border-radius:var(--radius-sm);
-    padding:16px 18px;color:#fff;font-size:15px;font-weight:500;
-  }
-  .tpl-sub{color:var(--muted);font-size:13.5px;margin-top:6px;}
-  .tpl-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
-  .tpl-btn{
-    font-size:13px;font-weight:600;color:#fff;background:rgba(48,76,254,.16);
-    border:1px solid rgba(48,76,254,.5);border-radius:9px;padding:8px 14px;
-  }
-  .tpl-btn.gold{background:rgba(233,185,73,.12);border-color:rgba(233,185,73,.5);color:var(--gold);}
-
-  .branch-grid{display:grid;gap:18px;grid-template-columns:1fr 1fr;}
-  .branch-card h3{display:flex;align-items:center;gap:9px;}
-  .branch-list{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:10px;}
-  .branch-list li{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--muted);}
-  .branch-list .arr{color:var(--brand);font-weight:700;flex:0 0 auto;}
-  .branch-list b{color:#fff;font-weight:600;}
-
-  .flow-wrap{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
-  .flow-node{
-    background:var(--panel);border:1px solid var(--border);border-radius:10px;
-    padding:9px 13px;font-size:13.5px;font-weight:600;color:#fff;white-space:nowrap;
-  }
-  .flow-node.end{border-color:rgba(233,185,73,.55);color:var(--gold);}
-  .flow-arrow{color:var(--muted);font-size:13px;opacity:.7;}
-  .branch-note{
-    margin-top:22px;background:var(--panel);border:1px solid var(--border);
-    border-radius:var(--radius);padding:18px 22px;
-  }
-  .branch-note h4{font-size:14px;color:var(--gold);margin-bottom:10px;}
-  .branch-chips{display:flex;flex-wrap:wrap;gap:10px;}
-  .branch-chips span{font-size:13px;color:var(--muted);background:var(--panel-2);
-    border:1px dashed var(--border-strong);border-radius:9px;padding:7px 12px;}
-  .branch-chips b{color:#fff;}
-
-  .arch-grid{display:grid;gap:14px;grid-template-columns:repeat(4,1fr);}
-  .arch-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
-    padding:20px;box-shadow:var(--shadow);}
-  .arch-card .layer{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);}
-  .arch-card h3{font-size:16px;margin:8px 0 6px;}
-  .arch-card p{color:var(--muted);font-size:13.5px;}
-  .loop-bar{
-    margin-top:20px;background:var(--panel-2);border:1px solid var(--border-strong);
-    border-radius:var(--radius);padding:18px 22px;
-  }
-  .loop-bar .lt{font-size:13px;color:var(--gold);font-weight:700;margin-bottom:12px;}
-  .loop-chain{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
-  .loop-chain span{font-size:13px;font-weight:600;color:#fff;background:rgba(48,76,254,.16);
-    border:1px solid rgba(48,76,254,.4);border-radius:9px;padding:7px 12px;}
-  .loop-chain .a{color:var(--muted);opacity:.7;}
-
-  .check-grid{display:grid;gap:14px;grid-template-columns:repeat(2,1fr);}
-  .check-card{display:flex;gap:14px;background:var(--panel);border:1px solid var(--border);
-    border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
-  .check-card .ci{flex:0 0 auto;width:30px;height:30px;border-radius:8px;background:var(--panel-2);
-    color:var(--gold);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px;border:1px solid var(--border);}
-  .check-card h4{font-size:15px;margin-bottom:5px;}
-  .check-card p{color:var(--muted);font-size:13.5px;}
-  .check-card .warn{color:var(--gold);font-weight:600;}
-
-  .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);}
-  table{width:100%;border-collapse:collapse;min-width:560px;}
-  thead th{
-    background:var(--panel-2);color:#fff;font-size:13px;font-weight:700;text-align:left;
-    padding:13px 18px;border-bottom:1px solid var(--border);white-space:nowrap;
-  }
-  tbody td{padding:13px 18px;font-size:13.5px;color:var(--muted);border-bottom:1px solid rgba(174,190,234,.08);vertical-align:top;}
+  .table-wrap{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{background:var(--panel-2);font-size:12.5px;font-weight:700;text-align:left;
+    padding:13px 16px;border-bottom:1px solid var(--border);white-space:nowrap;color:#fff;}
+  tbody td{padding:13px 16px;font-size:13.5px;border-bottom:1px solid rgba(174,190,234,.08);vertical-align:middle;}
+  tbody tr{transition:.12s;cursor:pointer;}
+  tbody tr:hover{background:rgba(36,59,115,.4);}
   tbody tr:last-child td{border-bottom:0;}
-  tbody tr:nth-child(odd) td{background:rgba(36,59,115,.25);}
-  tbody td .st{color:#fff;font-weight:600;}
+  .cust-name{font-weight:700;color:#fff;}
+  .cust-sub{color:var(--muted);font-size:12px;}
+  .muted{color:var(--muted);}
+  .empty{padding:60px 20px;text-align:center;color:var(--muted);}
 
-  .next-grid{display:grid;gap:14px;grid-template-columns:repeat(4,1fr);}
-  .next-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
-    padding:20px;box-shadow:var(--shadow);}
-  .next-card .n{color:var(--brand);font-weight:800;font-size:13px;letter-spacing:.1em;}
-  .next-card h4{font-size:15px;margin:9px 0 5px;}
-  .next-card p{color:var(--muted);font-size:13px;}
+  .stage-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+    padding:5px 10px;border-radius:999px;background:rgba(48,76,254,.16);color:#cdd6ff;border:1px solid rgba(48,76,254,.4);white-space:nowrap;}
+  .stage-badge.done{background:rgba(61,214,140,.14);color:#9ff0c6;border-color:rgba(61,214,140,.4);}
+  .stage-badge.wait{background:rgba(233,185,73,.14);color:#f4d488;border-color:rgba(233,185,73,.45);}
+  .stage-badge.pre{background:rgba(174,190,234,.1);color:var(--muted);border-color:var(--border);}
+  .resp-flag{font-size:10.5px;font-weight:700;color:var(--gold);margin-left:2px;}
 
-  footer{border-top:1px solid var(--border);padding:50px 0 60px;background:rgba(26,42,87,.35);}
-  .foot-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:32px;}
-  footer h4{font-size:16px;margin-bottom:12px;}
-  footer p{color:var(--muted);font-size:14px;margin-bottom:8px;}
-  .foot-meta{display:grid;gap:7px;font-size:13.5px;color:var(--muted);}
-  .foot-meta b{color:#fff;font-weight:600;}
-  .foot-bottom{margin-top:36px;padding-top:22px;border-top:1px solid var(--border);
-    font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .row-actions{display:flex;gap:6px;justify-content:flex-end;}
 
-  @media (max-width:880px){
-    .g-3{grid-template-columns:1fr;}
-    .g-2,.branch-grid,.check-grid,.foot-grid{grid-template-columns:1fr;}
-    .arch-grid,.next-grid{grid-template-columns:1fr 1fr;}
-    .brand .name{display:none;}
+  /* progress mini bar */
+  .pbar{width:90px;height:6px;border-radius:999px;background:rgba(174,190,234,.15);overflow:hidden;}
+  .pbar > i{display:block;height:100%;background:var(--brand);border-radius:999px;}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(6,11,28,.72);backdrop-filter:blur(3px);
+    z-index:100;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
+  .overlay.open{display:flex;}
+  .modal{background:var(--panel);border:1px solid var(--border-strong);border-radius:18px;
+    width:100%;max-width:560px;box-shadow:0 24px 70px rgba(0,0,0,.5);animation:pop .18s ease;}
+  .modal.lg{max-width:720px;}
+  @keyframes pop{from{transform:translateY(8px) scale(.98);opacity:0;}to{transform:none;opacity:1;}}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 22px;border-bottom:1px solid var(--border);}
+  .modal-head h3{font-size:17px;}
+  .modal-head .x{background:none;border:0;color:var(--muted);font-size:22px;line-height:1;padding:4px;}
+  .modal-body{padding:22px;}
+  .modal-foot{padding:16px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .form-grid .full{grid-column:1 / -1;}
+  label.fl{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:6px;}
+  .form-grid .field, .modal-body textarea.field{width:100%;}
+  textarea.field{resize:vertical;min-height:70px;}
+
+  /* detail step tracker */
+  .det-head{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:18px;}
+  .det-head .meta{display:grid;gap:3px;}
+  .det-head .meta .nm{font-size:18px;font-weight:800;}
+  .det-head .meta .sub{font-size:13px;color:var(--muted);}
+  .det-amount{margin-left:auto;text-align:right;}
+  .det-amount .a{font-size:20px;font-weight:800;color:var(--gold);}
+  .det-amount .l{font-size:11.5px;color:var(--muted);}
+
+  .steps{display:grid;gap:8px;}
+  .stepitem{display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:center;
+    background:var(--panel-2);border:1px solid var(--border);border-radius:12px;padding:11px 14px;}
+  .stepitem.sent{border-color:rgba(61,214,140,.4);}
+  .stepitem.cur{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand) inset;}
+  .stepitem .sn{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:14px;background:rgba(174,190,234,.12);color:var(--muted);}
+  .stepitem.sent .sn{background:var(--ok);color:#06281a;}
+  .stepitem .st-main{min-width:0;}
+  .stepitem .st-t{font-size:14px;font-weight:700;}
+  .stepitem .st-d{font-size:12px;color:var(--muted);margin-top:1px;}
+  .stepitem .st-d .sentat{color:var(--ok);}
+  .stepitem .resp-pick{margin-top:7px;display:flex;gap:6px;flex-wrap:wrap;}
+  .chipbtn{font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:8px;
+    border:1px solid var(--border-strong);background:transparent;color:var(--muted);}
+  .chipbtn.on{background:var(--brand);border-color:var(--brand);color:#fff;}
+  .chipbtn.on.alt{background:var(--gold);border-color:var(--gold);color:#3a2e00;}
+  .st-action .btn{min-width:78px;text-align:center;}
+
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+    background:var(--panel-2);border:1px solid var(--border-strong);color:#fff;
+    padding:11px 18px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow);
+    opacity:0;pointer-events:none;transition:.25s;z-index:200;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:820px){
+    .stats{grid-template-columns:1fr 1fr;}
+    .col-partner,.col-amount{display:none;}
+    .form-grid{grid-template-columns:1fr;}
   }
-  @media (max-width:560px){
-    section{padding:54px 0;}
-    .arch-grid,.next-grid{grid-template-columns:1fr;}
-    .step{grid-template-columns:42px 1fr;gap:13px;padding:16px;}
-    .step .badge{width:40px;height:40px;font-size:16px;}
-    .acc-body{padding-left:22px;}
-    .wrap{padding:0 18px;}
+  @media (max-width:520px){
+    .wrap{padding:16px;} .topbar-in{padding:12px 16px;}
+    .col-phone{display:none;}
+    .pbar{display:none;}
   }
 </style>
 </head>
 <body>
 
-<nav class="nav">
-  <div class="wrap nav-inner">
-    <div class="brand"><span class="dot"></span><span class="name">철거의정석 · 알림톡 시스템</span></div>
-    <div class="nav-links">
-      <a href="#overview">개요</a>
-      <a href="#journey">10단계</a>
-      <a href="#preview">카톡 미리보기</a>
-      <a href="#templates">템플릿</a>
-      <a href="#branch">응답형 분기</a>
-      <a href="#status">상태값</a>
-      <a href="#arch">아키텍처</a>
-      <a href="#partner">파트너</a>
-      <a href="#checklist">체크포인트</a>
-      <a href="#timeline">예시</a>
-      <a href="#next">다음 단계</a>
-    </div>
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="logo"><span class="dot"></span>철거의정석 <small>고객/현장 관리</small></div>
+    <div class="spacer"></div>
+    <button class="btn ghost sm" id="seedBtn" title="샘플 데이터 다시 채우기">샘플 채우기</button>
+    <button class="btn primary" id="addBtn">+ 고객/현장 추가</button>
   </div>
-</nav>
+</div>
 
-<header class="hero">
-  <div class="wrap">
-    <span class="tag">INTERNAL REFERENCE · 관리자 전용 문서</span>
-    <h1>철거의정석 고객 알림톡<br/>자동화 시스템</h1>
-    <p class="sub">접수부터 평가까지, 10단계 자동 안내 설계</p>
-    <div class="hero-meta">
-      <span class="chip"><b>10</b> 단계 메시지 흐름</span>
-      <span class="chip"><b>2</b> 응답형 분기 단계</span>
-      <span class="chip"><b>4층</b> 시스템 아키텍처</span>
-      <span class="chip">본사책임제 · <b>추가금 0원</b></span>
-    </div>
+<div class="wrap">
+  <div class="stats">
+    <div class="stat"><div class="lbl">전체 현장</div><div class="val" id="stTotal">0</div></div>
+    <div class="stat"><div class="lbl">진행중</div><div class="val" id="stActive">0</div></div>
+    <div class="stat wait"><div class="lbl">응답 대기 (④·⑧)</div><div class="val" id="stWait">0</div></div>
+    <div class="stat done"><div class="lbl">완료</div><div class="val" id="stDone">0</div></div>
   </div>
-</header>
 
-<section id="overview">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="kicker">Overview</div>
-      <h2 class="sec-title">시스템 개요</h2>
-      <p class="sec-desc">
-        고객 알림톡 자동화 시스템은 철거의정석으로 접수된 고객이 <b style="color:#fff">견적 요청 → 상담 → 현장 방문 → 견적 확정 → 시공 → 완료 → 평가</b>에
-        이르는 전 과정을 카카오 알림톡으로 자동 안내하는 내부 운영 도구입니다. 각 단계의 상태값 변화에 따라 정해진 템플릿이 자동 발송되며,
-        ④ 방문 확인·⑧ 완료 확인은 고객 응답을 받아 후속 처리(재배정·일정 재설정 등)로 분기합니다.
-      </p>
-    </div>
-    <div class="grid g-3">
-      <div class="card">
-        <div class="num">①</div>
-        <h3>고객 신뢰 가시화</h3>
-        <p>진행 상황을 단계마다 먼저 알려, 고객이 "지금 내 공사가 어디까지 왔는지" 항상 확인할 수 있게 합니다. 불안 문의를 선제적으로 줄입니다.</p>
-      </div>
-      <div class="card">
-        <div class="num">②</div>
-        <h3>운영 효율</h3>
-        <p>반복 안내를 자동화해 본사·파트너의 수동 연락을 최소화합니다. 상태값 한 번 변경으로 다음 알림톡이 자동 발송됩니다.</p>
-      </div>
-      <div class="card">
-        <div class="num">③</div>
-        <h3>본사책임제 증명</h3>
-        <p>접수·계약·정산·완료 전 과정을 본사가 기록·통지하여, 책임 주체가 본사임을 고객에게 투명하게 남깁니다.</p>
-      </div>
-    </div>
+  <div class="toolbar">
+    <input class="field search" id="search" placeholder="고객명·연락처·현장 주소 검색" />
+    <select class="field" id="filterStage">
+      <option value="">전체 단계</option>
+      <option value="pre">접수 전</option>
+      <option value="active">진행중</option>
+      <option value="wait">응답 대기</option>
+      <option value="done">완료</option>
+    </select>
+    <div class="spacer"></div>
+    <span class="muted" id="count" style="font-size:13px;"></span>
   </div>
-</section>
 
-<section id="journey">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="kicker">Customer Journey</div>
-      <h2 class="sec-title">고객 여정 10단계</h2>
-      <p class="sec-desc">각 단계는 <b style="color:#fff">트리거 → 발송 메시지 → 버튼</b>으로 구성됩니다. ④·⑧은 고객 응답을 받는 응답형 단계입니다.</p>
-    </div>
-    <div class="timeline" id="timeline"></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>고객 / 현장</th>
+          <th class="col-phone">연락처</th>
+          <th class="col-partner">파트너</th>
+          <th>현재 단계</th>
+          <th class="col-amount">확정 금액</th>
+          <th style="text-align:right;">진행</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="emptyState" style="display:none;">등록된 현장이 없습니다. <b>+ 고객/현장 추가</b>로 시작하세요.</div>
   </div>
-</section>
+</div>
 
-<section id="preview">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="kicker">Chat Preview</div>
-      <h2 class="sec-title">카카오톡 채널 미리보기</h2>
-      <p class="sec-desc">고객이 실제로 보게 될 알림톡 화면 재현입니다. 각 카드 좌측 번호는 10단계 순서, ④·⑧에는 "응답형" 태그가 표시됩니다.</p>
+<!-- 추가/수정 모달 -->
+<div class="overlay" id="formOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="formTitle">고객/현장 추가</h3>
+      <button class="x" data-close>&times;</button>
     </div>
-    <div class="kakao-shell">
-      <div class="kakao-top">
-        <div class="kakao-top-bar"><span class="k-ico">정</span> 알림톡 도착 · 철거의정석</div>
-      </div>
-      <div class="kakao-body" id="kakaoBody"></div>
-    </div>
-  </div>
-</section>
-
-<section id="templates">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="kicker">Templates</div>
-      <h2 class="sec-title">10개 알림톡 템플릿 전체</h2>
-      <p class="sec-desc">카드를 클릭하면 강조 제목·본문·버튼이 펼쳐집니다. 심사 등록용 실제 멘트 기준입니다.</p>
-    </div>
-    <div class="acc" id="acc"></div>
-  </div>
-</section>
-
-<section id="branch">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="kicker">Response &amp; Branching</div>
-      <h2 class="sec-title">응답형 버튼 &amp; 분기 처리</h2>
-      <p class="sec-desc">④ 방문 완료 확인, ⑧ 공사 완료 확인은 고객의 버튼 선택에 따라 후속 자동화가 분기됩니다.</p>
-    </div>
-    <div class="branch-grid">
-      <div class="card branch-card">
-        <h3><span class="resp-badge">④ 응답형</span> 현장 방문 완료 확인</h3>
-        <p style="color:var(--muted);font-size:14px;margin-top:10px;">고객에게 파트너 방문 여부를 직접 확인받습니다.</p>
-        <ul class="branch-list">
-          <li><span class="arr">→</span><span><b>방문했어요</b> · 정상 진행, 견적 확정(⑤) 단계로 상태값 이동</span></li>
-          <li><span class="arr">→</span><span><b>미방문했어요</b> · 본사 알림 → 파트너 <b>재배정</b> 처리 후 방문 일정 재안내</span></li>
-        </ul>
-      </div>
-      <div class="card branch-card">
-        <h3><span class="resp-badge">⑧ 응답형</span> 공사 완료 확인</h3>
-        <p style="color:var(--muted);font-size:14px;margin-top:10px;">시공 마무리 여부와 고객 확인을 받습니다.</p>
-        <ul class="branch-list">
-          <li><span class="arr">→</span><span><b>공사 완료됐어요</b> · 완료 통지(⑨) → 서비스 평가(⑩) 자동 발송</span></li>
-          <li><span class="arr">→</span><span><b>일정 변경</b> · 일정 <b>재설정</b> 플로우로 분기, 공사예정 상태로 회귀</span></li>
-          <li><span class="arr">→</span><span><b>문의</b> · 본사 고객센터(1555-6205) 연결 처리</span></li>
-        </ul>
-      </div>
-    </div>
-    <div class="branch-note">
-      <h4>전역 분기 규칙</h4>
-      <div class="branch-chips">
-        <span><b>미방문</b> → 파트너 재배정</span>
-        <span><b>일정 변경</b> → 일정 재설정</span>
-        <span><b>취소</b> → 본사 처리(계약·정산 회수)</span>
-        <span><b>평가 미응답</b> → 리마인드 1회 발송</span>
-        <span><b>알림톡 실패</b> → SMS 대체 발송</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="status">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="kicker">Status Flow</div>
-      <h2 class="sec-title">상태값 흐름</h2>
-      <p class="sec-desc">상태값이 변경될 때마다 매핑된 알림톡이 자동 발송됩니다. 골드 노드는 종료 상태입니다.</p>
-    </div>
-    <div class="flow-wrap" id="statusFlow"></div>
-    <div class="branch-note">
-      <h4>흐름 중 분기</h4>
-      <div class="branch-chips">
-        <span><b>미방문</b> · 방문확인대기 → 업체배정으로 회귀</span>
-        <span><b>일정 변경</b> · 완료확인대기 → 공사예정으로 회귀</span>
-        <span><b>취소</b> · 어느 단계든 본사 처리 후 종료</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="arch">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="kicker">Architecture</div>
-      <h2 class="sec-title">시스템 아키텍처 (4층)</h2>
-      <p class="sec-desc">데이터·발송·자동화·포털 4개 층이 하나의 루프로 연결되어, 고객 응답이 자동으로 다음 알림톡을 발생시킵니다.</p>
-    </div>
-    <div class="arch-grid">
-      <div class="arch-card">
-        <div class="layer">Layer 1 · Data</div>
-        <h3>데이터</h3>
-        <p>노션 / 에어테이블. 고객·현장·상태값·변수 원장 관리.</p>
-      </div>
-      <div class="arch-card">
-        <div class="layer">Layer 2 · Messaging</div>
-        <h3>발송</h3>
-        <p>루나소프트 알림톡 API. 템플릿 기반 카카오 알림톡 발송, 실패 시 SMS 대체.</p>
-      </div>
-      <div class="arch-card">
-        <div class="layer">Layer 3 · Automation</div>
-        <h3>자동화</h3>
-        <p>Make.com. 웹훅 수신, 상태값 분기, 다음 템플릿 트리거 오케스트레이션.</p>
-      </div>
-      <div class="arch-card">
-        <div class="layer">Layer 4 · Portal</div>
-        <h3>포털</h3>
-        <p>Softr. 고객·파트너 페이지(요청서·사진·견적서) 및 버튼 랜딩.</p>
-      </div>
-    </div>
-    <div class="loop-bar">
-      <div class="lt">자동화 루프</div>
-      <div class="loop-chain">
-        <span>버튼 클릭</span><span class="a">→</span>
-        <span>포털 / 챗봇</span><span class="a">→</span>
-        <span>Make 웹훅</span><span class="a">→</span>
-        <span>상태값 업데이트</span><span class="a">→</span>
-        <span>다음 알림톡 자동 발송</span><span class="a">↺</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="partner">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="kicker">Partner Track</div>
-      <h2 class="sec-title">파트너(업체) 트랙</h2>
-      <p class="sec-desc">검증 파트너 대표님을 위한 별도 알림 흐름입니다. 파트너의 사진 등록이 고객 알림의 트리거가 됩니다.</p>
-    </div>
-    <div class="grid g-2">
-      <div class="card">
-        <div class="num" style="color:var(--brand)">▣</div>
-        <h3>신규 현장 배정</h3>
-        <p>"대표님, 신규 현장이 배정되었습니다." 현장 주소·일정·요청 사항을 안내하고, 방문 일정 확인을 받습니다.</p>
-        <div class="tpl-btns"><span class="tpl-btn">현장 정보 보기</span><span class="tpl-btn">배정 확인</span></div>
-      </div>
-      <div class="card">
-        <div class="num" style="color:var(--brand)">▤</div>
-        <h3>사진 등록 요청</h3>
-        <p>"대표님, 공사 진행 사진 등록을 요청드립니다." 포털에 진행 사진을 업로드하도록 안내합니다.</p>
-        <div class="tpl-btns"><span class="tpl-btn">사진 등록하기</span></div>
-      </div>
-    </div>
-    <div class="branch-note">
-      <h4>핵심 연동</h4>
-      <p style="color:#fff;font-size:14.5px;">
-        <b style="color:var(--gold)">파트너 사진 등록 = 고객 ⑦ '공사 진행 사진이 등록되었습니다' 알림 자동 트리거.</b>
-        대표님이 포털에 사진을 올리면 Make 웹훅이 상태값을 갱신하고, 고객에게 ⑦ 알림톡이 즉시 발송됩니다.
-      </p>
-    </div>
-  </div>
-</section>
-
-<section id="checklist">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="kicker">Pre-launch Checklist</div>
-      <h2 class="sec-title">런칭 전 체크포인트</h2>
-      <p class="sec-desc">카카오 심사 통과와 정보성 표기를 위한 필수 점검 항목입니다.</p>
-    </div>
-    <div class="check-grid">
-      <div class="check-card">
-        <div class="ci">①</div>
+    <div class="modal-body">
+      <input type="hidden" id="f_id" />
+      <div class="form-grid">
         <div>
-          <h4>카카오 심사 리스크</h4>
-          <p><span class="warn">⑩ 서비스 평가 템플릿은 반려 위험</span>이 있으므로 보상·혜택 문구 금지. 순수 정보성 멘트로만 구성합니다.</p>
+          <label class="fl">고객명</label>
+          <input class="field" id="f_name" placeholder="예: 김정석" />
         </div>
-      </div>
-      <div class="check-card">
-        <div class="ci">②</div>
         <div>
-          <h4>호칭 규칙</h4>
-          <p>기본 호칭은 <b style="color:#fff">사장님</b>, 개인 고객의 경우 <b style="color:#fff">고객님</b>으로 변수 분기. 파트너는 <b style="color:#fff">대표님</b>.</p>
+          <label class="fl">호칭</label>
+          <select class="field" id="f_title">
+            <option value="사장님">사장님</option>
+            <option value="고객님">고객님</option>
+          </select>
         </div>
-      </div>
-      <div class="check-card">
-        <div class="ci">③</div>
         <div>
-          <h4>추가금 0원 표기</h4>
-          <p>'추가금 0원'은 광고 카피가 아닌 <b style="color:#fff">확정견적 정보성 표기</b>로만 사용. 과장 표현을 피합니다.</p>
+          <label class="fl">연락처</label>
+          <input class="field" id="f_phone" placeholder="010-0000-0000" />
         </div>
-      </div>
-      <div class="check-card">
-        <div class="ci">④</div>
         <div>
-          <h4>변수 철자 일치</h4>
-          <p>모든 <b style="color:#fff">#{변수명}</b>은 데이터 원장과 철자가 정확히 일치해야 발송 오류가 없습니다. 대표번호 <b style="color:#fff">1555-6205</b>는 부가정보에 고정.</p>
+          <label class="fl">확정 금액 (원)</label>
+          <input class="field" id="f_amount" type="number" placeholder="예: 3500000" />
+        </div>
+        <div class="full">
+          <label class="fl">현장 주소</label>
+          <input class="field" id="f_address" placeholder="예: 서울 강남구 ○○로 12" />
+        </div>
+        <div class="full">
+          <label class="fl">파트너 업체</label>
+          <input class="field" id="f_partner" placeholder="예: ○○건설" />
+        </div>
+        <div class="full">
+          <label class="fl">메모</label>
+          <textarea class="field" id="f_memo" placeholder="특이사항·요청사항"></textarea>
         </div>
       </div>
     </div>
+    <div class="modal-foot">
+      <button class="btn ghost" data-close>취소</button>
+      <button class="btn primary" id="saveBtn">저장</button>
+    </div>
   </div>
-</section>
+</div>
 
-<section id="timeline">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="kicker">Sample Timeline</div>
-      <h2 class="sec-title">예시 타임라인 (약 1주)</h2>
-      <p class="sec-desc">6월 16일 접수부터 6월 23일 평가까지, 실제 운영 시 발생·발송 흐름 예시입니다.</p>
+<!-- 상세(단계 진행) 모달 -->
+<div class="overlay" id="detailOverlay">
+  <div class="modal lg">
+    <div class="modal-head">
+      <h3>현장 진행 관리</h3>
+      <button class="x" data-close>&times;</button>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>일시</th><th>상태값</th><th>발생 · 발송</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>6.16 (월) 10:20</td><td><span class="st">접수완료</span></td><td>① 견적 요청 접수 완료 알림톡 발송</td></tr>
-          <tr><td>6.16 (월) 14:05</td><td><span class="st">상담중</span></td><td>② 상담 예정 안내 발송 · 본사 담당자 연락</td></tr>
-          <tr><td>6.17 (화) 09:30</td><td><span class="st">업체배정 → 방문예정</span></td><td>③ 현장 방문 예정 안내 발송</td></tr>
-          <tr><td>6.17 (화) 18:40</td><td><span class="st">방문확인대기</span></td><td>④ 방문 완료 확인(응답형) 발송 · 고객 '방문했어요' 응답</td></tr>
-          <tr><td>6.18 (수) 11:00</td><td><span class="st">견적확정</span></td><td>⑤ 견적 확정 안내 발송 (확정 금액 · 추가금 0원)</td></tr>
-          <tr><td>6.18 (수) 16:20</td><td><span class="st">계약완료 → 공사예정</span></td><td>⑥ 공사 일정 확정 안내 발송</td></tr>
-          <tr><td>6.20 (금) 13:10</td><td><span class="st">공사중</span></td><td>파트너 사진 등록 → ⑦ 공사 진행 사진 등록 알림 자동 발송</td></tr>
-          <tr><td>6.20 (금) 19:00</td><td><span class="st">완료확인대기</span></td><td>⑧ 공사 완료 확인(응답형) 발송 · 고객 '완료됐어요' 응답</td></tr>
-          <tr><td>6.21 (토) 10:00</td><td><span class="st">공사완료</span></td><td>⑨ 공사 완료 안내 발송</td></tr>
-          <tr><td>6.23 (월) 11:00</td><td><span class="st">평가요청 → 종료</span></td><td>⑩ 서비스 평가 요청 발송 · 평가 완료 시 종료</td></tr>
-        </tbody>
-      </table>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-foot">
+      <button class="btn danger" id="delBtn">삭제</button>
+      <div class="spacer" style="flex:1;"></div>
+      <button class="btn ghost" id="editBtn">정보 수정</button>
+      <button class="btn primary" data-close>닫기</button>
     </div>
   </div>
-</section>
+</div>
 
-<section id="next">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="kicker">Next Steps</div>
-      <h2 class="sec-title">다음 단계</h2>
-      <p class="sec-desc">런칭을 위한 실행 항목입니다.</p>
-    </div>
-    <div class="next-grid">
-      <div class="next-card"><div class="n">STEP 01</div><h4>템플릿 심사 등록</h4><p>10개 알림톡 템플릿을 카카오 심사에 등록.</p></div>
-      <div class="next-card"><div class="n">STEP 02</div><h4>Make 트리거 매핑</h4><p>상태값 ↔ 템플릿 발송 트리거를 Make.com에 매핑.</p></div>
-      <div class="next-card"><div class="n">STEP 03</div><h4>Softr 페이지 연결</h4><p>요청서·견적서·사진 등록 등 버튼 랜딩 페이지 연결.</p></div>
-      <div class="next-card"><div class="n">STEP 04</div><h4>파일럿 운영</h4><p>신규 현장 5건으로 파일럿 운영 후 보정.</p></div>
-    </div>
-  </div>
-</section>
-
-<footer>
-  <div class="wrap">
-    <div class="foot-grid">
-      <div>
-        <h4>철거의정석 · 정석네트웍스</h4>
-        <p>대한민국 최초 '본사책임제' 철거 브랜드. 본사가 계약·정산·서류를 책임지고, 검증된 파트너가 시공합니다.</p>
-        <p style="margin-top:14px;color:var(--muted);font-size:13.5px;">
-          추가금 0원(확정견적) · 자체 폐기물장으로 처리비 약 30%↓ · SBS·KBS 방송 다수 출연 ·
-          폐업지원금 최대 900만원 대행 · 월 약 80건 공사, 운영 1년 만에 전국 2위.
-        </p>
-      </div>
-      <div>
-        <h4>회사 정보</h4>
-        <div class="foot-meta">
-          <span>법인명 · <b>정석네트웍스</b></span>
-          <span>브랜드 · <b>철거의정석</b></span>
-          <span>대표번호 · <b>1555-6205</b></span>
-          <span>웹사이트 · <b>철거의정석.com</b></span>
-        </div>
-      </div>
-    </div>
-    <div class="foot-bottom">
-      <span>내부 관리자 전용 레퍼런스 문서 · 외부 배포 금지</span>
-      <span>© 정석네트웍스 (철거의정석)</span>
-    </div>
-  </div>
-</footer>
+<div class="toast" id="toast"></div>
 
 <script>
-  var STEPS = [
-    {n:"①", title:"견적 요청 접수", resp:false, trigger:"고객 견적 요청서 제출", msg:"견적 요청 접수 완료 안내", btn:"내 요청서 보기",
-      head:"[견적 요청 접수 완료]", body:"사장님, 견적 요청 접수가 완료되었습니다.", buttons:["내 요청서 보기"], time:"오전 10:20", date:true},
-    {n:"②", title:"상담 예정 안내", resp:false, trigger:"본사 담당자 배정", msg:"상담 예정 안내", btn:"고객센터 문의",
-      head:"상담 예정 안내", body:"본사 담당자가 금일 중 연락드릴 예정입니다.", buttons:["고객센터 문의"], time:"오후 2:05"},
-    {n:"③", title:"현장 방문 예정 안내", resp:false, trigger:"파트너 업체 배정", msg:"현장 방문 예정 안내", btn:"자세히 보기",
-      head:"현장 방문 예정 안내", body:"○○에 파트너 업체가 현장 방문 예정입니다.", buttons:["자세히 보기"], time:"오전 9:30"},
-    {n:"④", title:"현장 방문 완료 확인", resp:true, trigger:"방문 예정일 경과", msg:"방문 완료 확인(응답형)", btn:"방문했어요 / 미방문했어요",
-      head:"현장 방문 완료 확인", body:"오늘 파트너 업체가 현장을 방문했나요?", buttons:["방문했어요","미방문했어요"], time:"오후 6:40"},
-    {n:"⑤", title:"견적이 확정되었습니다", resp:false, trigger:"본사 견적 확정", msg:"견적 확정 안내", btn:"견적서 자세히 보기",
-      head:"견적이 확정되었습니다", body:"확정 금액 ○○원 · 추가금 0원", buttons:["견적서 자세히 보기"], time:"오전 11:00"},
-    {n:"⑥", title:"공사 일정이 확정되었습니다", resp:false, trigger:"계약 완료", msg:"공사 일정 확정 안내", btn:"자세히 보기",
-      head:"공사 일정이 확정되었습니다", body:"○○~○○ ○○건설 시공으로 확정.", buttons:["자세히 보기"], time:"오후 4:20"},
-    {n:"⑦", title:"공사 진행 사진이 등록되었습니다", resp:false, trigger:"파트너 사진 등록", msg:"진행 사진 등록 알림", btn:"현장 사진 보기",
-      head:"공사 진행 사진이 등록되었습니다", body:"진행 사진을 확인하실 수 있습니다.", buttons:["현장 사진 보기"], time:"오후 1:10"},
-    {n:"⑧", title:"공사 확인 필요", resp:true, trigger:"시공 마무리 단계", msg:"공사 완료 확인(응답형)", btn:"완료 / 일정 변경 / 문의",
-      head:"공사 확인 필요", body:"진행하신 공사가 마무리 되었나요?", buttons:["공사 완료됐어요","일정 변경","문의"], time:"오후 7:00"},
-    {n:"⑨", title:"공사가 완료되었습니다", resp:false, trigger:"완료 확인 응답 수신", msg:"공사 완료 안내", btn:"자세히 보기",
-      head:"공사가 완료되었습니다", body:"이용해 주셔서 감사합니다.", buttons:["자세히 보기"], time:"오전 10:00"},
-    {n:"⑩", title:"서비스 평가를 부탁드립니다", resp:false, trigger:"완료 후 평가 요청", msg:"서비스 평가 요청", btn:"평가 남기기",
-      head:"서비스 평가를 부탁드립니다", body:"이번 공사는 만족스러우셨나요?", buttons:["평가 남기기"], time:"오전 11:00", date2:true}
+/* ===== 10단계 정의 ===== */
+var STEPS = [
+  {n:1, t:"견적 요청 접수", talk:"견적 요청 접수가 완료되었습니다.", resp:null},
+  {n:2, t:"상담 예정 안내", talk:"본사 담당자가 금일 중 연락드릴 예정입니다.", resp:null},
+  {n:3, t:"현장 방문 예정 안내", talk:"파트너 업체가 현장 방문 예정입니다.", resp:null},
+  {n:4, t:"현장 방문 완료 확인", talk:"오늘 파트너 업체가 현장을 방문했나요?", resp:["방문완료","미방문"]},
+  {n:5, t:"견적 확정", talk:"확정 금액 안내 · 추가금 0원", resp:null},
+  {n:6, t:"공사 일정 확정", talk:"공사 일정이 확정되었습니다.", resp:null},
+  {n:7, t:"공사 진행 사진 등록", talk:"진행 사진을 확인하실 수 있습니다.", resp:null},
+  {n:8, t:"공사 완료 확인", talk:"진행하신 공사가 마무리 되었나요?", resp:["공사완료","일정변경","문의"]},
+  {n:9, t:"공사 완료", talk:"이용해 주셔서 감사합니다.", resp:null},
+  {n:10, t:"서비스 평가 요청", talk:"이번 공사는 만족스러우셨나요?", resp:null}
+];
+var KEY = "tomtak_cust_v1";
+
+/* ===== 저장/로드 ===== */
+function load(){
+  try{ var d = JSON.parse(localStorage.getItem(KEY)); if(Array.isArray(d)) return d; }catch(e){}
+  return null;
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(DATA)); }
+
+function uid(){ return "c"+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3); }
+function nowStr(){
+  var d = new Date();
+  var mm = (d.getMonth()+1), dd = d.getDate();
+  var hh = String(d.getHours()).padStart(2,"0"), mi = String(d.getMinutes()).padStart(2,"0");
+  return mm+"."+dd+" "+hh+":"+mi;
+}
+function won(v){ if(!v && v!==0) return "-"; return Number(v).toLocaleString("ko-KR")+"원"; }
+
+/* 새 현장 기본 구조 */
+function blankSteps(){ return STEPS.map(function(){ return {sent:false, at:null, resp:null}; }); }
+
+/* ===== 시드 데이터 ===== */
+function seedData(){
+  function mk(name,title,phone,addr,partner,amount,memo,upto,resp4,resp8){
+    var s = blankSteps();
+    for(var i=0;i<upto;i++){ s[i].sent=true; s[i].at = (i+1)+".15 1"+i+":00"; }
+    if(resp4 && s[3].sent) s[3].resp = resp4;
+    if(resp8 && s[7].sent) s[7].resp = resp8;
+    return {id:uid(), name:name, title:title, phone:phone, address:addr, partner:partner, amount:amount, memo:memo, steps:s, createdAt:nowStr()};
+  }
+  return [
+    mk("김정석","사장님","010-1234-5678","서울 강남구 테헤란로 12","정석건설",3500000,"상가 내부 철거",6,"방문완료",null),
+    mk("이본사","고객님","010-2222-3333","경기 성남시 분당구 ○○로 8","파트너A",1800000,"주방 철거 + 폐기물",4,null,null),
+    mk("박완료","사장님","010-9876-5432","인천 연수구 ○○대로 100","정석건설",5200000,"사무실 전체 철거",10,"방문완료","공사완료"),
+    mk("최대기","사장님","010-5555-6666","서울 마포구 ○○길 3","파트너B",2400000,"",8,"방문완료",null)
   ];
+}
 
-  (function(){
-    var html = "";
-    STEPS.forEach(function(s){
-      html += '<div class="step">'
-        + '<div class="badge">'+s.n+'</div>'
-        + '<div class="body">'
-        + '<div class="stitle">'+s.title + (s.resp ? ' <span class="resp-badge">응답형</span>' : '') + '</div>'
-        + '<div class="flow">'
-        + '<span class="pill"><span class="lbl">트리거</span><b>'+s.trigger+'</b></span>'
-        + '<span class="pill"><span class="lbl">발송</span><b>'+s.msg+'</b></span>'
-        + '<span class="pill"><span class="lbl">버튼</span><b>'+s.btn+'</b></span>'
-        + '</div></div></div>';
-    });
-    document.getElementById("timeline").innerHTML = html;
-  })();
+var DATA = load();
+if(!DATA){ DATA = seedData(); save(); }
 
-  (function(){
-    var html = '<div class="k-date"><span>2026년 6월 16일</span></div>';
-    STEPS.forEach(function(s){
-      if(s.date2){ html += '<div class="k-date"><span>2026년 6월 23일</span></div>'; }
-      var btns = s.buttons.map(function(b){ return '<div class="k-btn">'+b+'</div>'; }).join("");
-      html += '<div class="k-msg">'
-        + '<div class="k-stepnum">'+s.n+'</div>'
-        + '<div style="display:flex;flex-direction:column;">'
-        + '<div class="k-card">'
-        + '<div class="k-card-head"><span class="t">'+s.head+'</span>'
-        + (s.resp ? '<span class="k-resp-tag">응답형</span>' : '') + '</div>'
-        + '<div class="k-card-body">'+s.body+'</div>'
-        + '<div class="k-btns">'+btns+'</div>'
-        + '</div>'
-        + '<span class="k-time">'+s.time+'</span>'
-        + '</div></div>';
-    });
-    document.getElementById("kakaoBody").innerHTML = html;
-  })();
+/* ===== 상태 계산 ===== */
+function sentCount(c){ return c.steps.filter(function(s){return s.sent;}).length; }
+function currentStepIndex(c){ // 마지막으로 발송된 단계 index, 없으면 -1
+  var idx=-1; c.steps.forEach(function(s,i){ if(s.sent) idx=i; }); return idx;
+}
+function isDone(c){ return c.steps[9].sent; }
+function isWaiting(c){ // 응답형(④⑧)이 발송됐는데 응답 미입력
+  return (c.steps[3].sent && !c.steps[3].resp) || (c.steps[7].sent && !c.steps[7].resp);
+}
+function statusOf(c){
+  if(isDone(c)) return "done";
+  if(isWaiting(c)) return "wait";
+  if(sentCount(c)===0) return "pre";
+  return "active";
+}
+function stageBadge(c){
+  var st = statusOf(c);
+  var idx = currentStepIndex(c);
+  if(st==="done") return {cls:"done", txt:"종료 · 평가요청"};
+  if(idx<0) return {cls:"pre", txt:"접수 전"};
+  var step = STEPS[idx];
+  var wait = (step.resp && !c.steps[idx].resp);
+  return {cls: wait?"wait":"", txt:"⑩①②③④⑤⑥⑦⑧⑨".charAt(0), label:step};
+}
 
-  (function(){
-    var html = "";
-    STEPS.forEach(function(s){
-      var btns = s.buttons.map(function(b){
-        var gold = (b.indexOf("미방문")>-1 || b.indexOf("일정 변경")>-1 || b.indexOf("문의")>-1);
-        return '<span class="tpl-btn'+(gold?' gold':'')+'">'+b+'</span>';
-      }).join("");
-      html += '<div class="acc-item">'
-        + '<button class="acc-head" type="button">'
-        + '<span class="anum">'+s.n+'</span>'
-        + '<span class="ttl">'+s.head + (s.resp ? ' <span class="resp-badge">응답형</span>' : '') + '</span>'
-        + '<span class="chev">▼</span>'
-        + '</button>'
-        + '<div class="acc-panel"><div class="acc-body">'
-        + '<div class="tpl-msg">'+s.body+'</div>'
-        + '<div class="tpl-sub">트리거 · '+s.trigger+'</div>'
-        + '<div class="tpl-btns">'+btns+'</div>'
-        + '</div></div></div>';
-    });
-    var acc = document.getElementById("acc");
-    acc.innerHTML = html;
-    acc.querySelectorAll(".acc-head").forEach(function(btn){
-      btn.addEventListener("click", function(){
-        var item = btn.parentElement;
-        var panel = item.querySelector(".acc-panel");
-        var isOpen = item.classList.contains("open");
-        if(isOpen){
-          panel.style.maxHeight = null;
-          item.classList.remove("open");
-        }else{
-          item.classList.add("open");
-          panel.style.maxHeight = panel.scrollHeight + "px";
-        }
-      });
-    });
-  })();
-
-  (function(){
-    var states = ["접수완료","상담중","업체배정","방문예정","방문확인대기","방문완료","견적확정",
-      "계약완료","공사예정","공사중","완료확인대기","공사완료","평가요청","종료"];
-    var html = "";
-    states.forEach(function(st,i){
-      var end = (st==="종료");
-      html += '<span class="flow-node'+(end?' end':'')+'">'+st+'</span>';
-      if(i < states.length-1) html += '<span class="flow-arrow">→</span>';
-    });
-    document.getElementById("statusFlow").innerHTML = html;
-  })();
-
-  document.querySelectorAll('.nav-links a').forEach(function(a){
-    a.addEventListener("click", function(e){
-      var id = a.getAttribute("href");
-      var el = document.querySelector(id);
-      if(el){
-        e.preventDefault();
-        var y = el.getBoundingClientRect().top + window.pageYOffset - 62;
-        window.scrollTo({top:y, behavior:"smooth"});
-      }
-    });
+/* ===== 렌더 ===== */
+var circ = ["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩"];
+function render(){
+  var q = document.getElementById("search").value.trim().toLowerCase();
+  var fil = document.getElementById("filterStage").value;
+  var rows = DATA.filter(function(c){
+    if(q){
+      var hay = (c.name+" "+c.phone+" "+c.address+" "+(c.partner||"")).toLowerCase();
+      if(hay.indexOf(q)<0) return false;
+    }
+    if(fil && statusOf(c)!==fil) return false;
+    return true;
   });
+
+  var tb = document.getElementById("tbody");
+  tb.innerHTML = "";
+  rows.forEach(function(c){
+    var idx = currentStepIndex(c);
+    var st = statusOf(c);
+    var badgeCls = st==="done"?"done":(st==="wait"?"wait":(st==="pre"?"pre":""));
+    var badgeTxt = st==="done" ? "✓ 종료 · 평가요청"
+                 : idx<0 ? "접수 전"
+                 : circ[idx]+" "+STEPS[idx].t + (st==="wait" ? " · 응답대기" : "");
+    var pct = Math.round(sentCount(c)/10*100);
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td><div class="cust-name">'+esc(c.name)+' <span class="muted" style="font-weight:500;">'+esc(c.title)+'</span></div>'
+        +'<div class="cust-sub">'+esc(c.address||"-")+'</div></td>'
+      +'<td class="col-phone muted">'+esc(c.phone||"-")+'</td>'
+      +'<td class="col-partner muted">'+esc(c.partner||"-")+'</td>'
+      +'<td><span class="stage-badge '+badgeCls+'">'+badgeTxt+'</span></td>'
+      +'<td class="col-amount" style="font-weight:600;">'+won(c.amount)+'</td>'
+      +'<td><div class="row-actions">'
+        +'<div class="pbar" title="'+sentCount(c)+'/10"><i style="width:'+pct+'%"></i></div>'
+        +'<button class="btn primary sm next-btn" '+(isDone(c)?'disabled style="opacity:.4"':'')+'>다음 ▶</button>'
+        +'</div></td>';
+    tr.addEventListener("click", function(e){
+      if(e.target.closest(".next-btn")) return;
+      openDetail(c.id);
+    });
+    tr.querySelector(".next-btn").addEventListener("click", function(e){
+      e.stopPropagation(); advance(c.id);
+    });
+    tb.appendChild(tr);
+  });
+
+  document.getElementById("emptyState").style.display = rows.length? "none":"block";
+  document.getElementById("count").textContent = rows.length+"건 표시 / 전체 "+DATA.length+"건";
+
+  document.getElementById("stTotal").textContent = DATA.length;
+  document.getElementById("stActive").textContent = DATA.filter(function(c){var s=statusOf(c);return s==="active"||s==="pre";}).length;
+  document.getElementById("stWait").textContent = DATA.filter(function(c){return isWaiting(c);}).length;
+  document.getElementById("stDone").textContent = DATA.filter(isDone).length;
+}
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m];}); }
+
+/* ===== 다음 단계 발송 ===== */
+function advance(id){
+  var c = DATA.find(function(x){return x.id===id;});
+  if(!c) return;
+  // 응답형 단계가 발송됐는데 응답 미입력이면 막기
+  var ci = currentStepIndex(c);
+  if(ci>=0 && STEPS[ci].resp && !c.steps[ci].resp){
+    toast("④/⑧ 응답을 먼저 입력하세요. 현장을 열어 선택해 주세요.");
+    openDetail(id); return;
+  }
+  var next = c.steps.findIndex(function(s){return !s.sent;});
+  if(next<0){ toast("이미 모든 단계가 완료됐습니다."); return; }
+  c.steps[next].sent = true;
+  c.steps[next].at = nowStr();
+  save(); render();
+  toast(circ[next]+" "+STEPS[next].t+" 알림톡 발송 처리됨");
+  if(document.getElementById("detailOverlay").classList.contains("open")) renderDetail(id);
+}
+
+/* ===== 상세 모달 ===== */
+var detailId = null;
+function openDetail(id){ detailId=id; renderDetail(id); document.getElementById("detailOverlay").classList.add("open"); }
+function renderDetail(id){
+  var c = DATA.find(function(x){return x.id===id;});
+  if(!c) return;
+  var body = document.getElementById("detailBody");
+  var h = '<div class="det-head">'
+    +'<div class="meta"><div class="nm">'+esc(c.name)+' <span class="muted" style="font-size:14px;font-weight:600;">'+esc(c.title)+'</span></div>'
+    +'<div class="sub">'+esc(c.address||"-")+' · '+esc(c.phone||"-")+(c.partner?' · 파트너 '+esc(c.partner):'')+'</div></div>'
+    +'<div class="det-amount"><div class="a">'+won(c.amount)+'</div><div class="l">확정 금액 · 추가금 0원</div></div>'
+    +'</div>';
+  if(c.memo) h += '<div class="muted" style="font-size:13px;margin:-6px 0 16px;">메모 · '+esc(c.memo)+'</div>';
+
+  h += '<div class="steps">';
+  c.steps.forEach(function(s,i){
+    var step = STEPS[i];
+    var cur = (currentStepIndex(c)===i);
+    h += '<div class="stepitem '+(s.sent?"sent":"")+' '+(cur?"cur":"")+'">'
+      +'<div class="sn">'+(s.sent?"✓":circ[i])+'</div>'
+      +'<div class="st-main"><div class="st-t">'+circ[i]+' '+esc(step.t)+'</div>'
+      +'<div class="st-d">'+esc(step.talk)+(s.sent&&s.at?' · <span class="sentat">발송 '+esc(s.at)+'</span>':'')+'</div>';
+    if(step.resp && s.sent){
+      h += '<div class="resp-pick">';
+      step.resp.forEach(function(r,ri){
+        var on = s.resp===r;
+        var alt = ri>0; // 첫 옵션은 정상(파랑), 나머지는 골드 강조
+        h += '<button class="chipbtn '+(on?("on"+(alt?" alt":"")):"")+'" data-resp="'+i+'" data-val="'+esc(r)+'">'+esc(r)+'</button>';
+      });
+      h += '</div>';
+      if(s.resp){
+        var note = branchNote(i, s.resp);
+        if(note) h += '<div class="st-d" style="margin-top:6px;color:var(--gold);">→ '+esc(note)+'</div>';
+      }
+    }
+    h += '</div>';
+    // 액션
+    h += '<div class="st-action">';
+    if(s.sent){
+      h += '<button class="btn ghost sm" data-unsend="'+i+'">발송취소</button>';
+    }else{
+      h += '<button class="btn primary sm" data-send="'+i+'">발송</button>';
+    }
+    h += '</div></div>';
+  });
+  h += '</div>';
+  body.innerHTML = h;
+
+  // 이벤트 바인딩
+  body.querySelectorAll("[data-send]").forEach(function(b){
+    b.onclick = function(){ var i=+b.dataset.send; sendStep(c.id,i); };
+  });
+  body.querySelectorAll("[data-unsend]").forEach(function(b){
+    b.onclick = function(){ var i=+b.dataset.unsend; unsendStep(c.id,i); };
+  });
+  body.querySelectorAll("[data-resp]").forEach(function(b){
+    b.onclick = function(){ setResp(c.id, +b.dataset.resp, b.dataset.val); };
+  });
+}
+function branchNote(i, r){
+  if(i===3){ return r==="미방문" ? "파트너 재배정 → 방문 일정 재안내" : "정상 진행 · 견적 확정 단계로"; }
+  if(i===7){
+    if(r==="일정변경") return "일정 재설정 → 공사예정으로 회귀";
+    if(r==="문의") return "본사 고객센터(1555-6205) 연결";
+    return "완료 통지(⑨) → 평가(⑩) 발송";
+  }
+  return "";
+}
+function sendStep(id,i){
+  var c=DATA.find(function(x){return x.id===id;}); if(!c)return;
+  c.steps[i].sent=true; c.steps[i].at=nowStr(); save(); render(); renderDetail(id);
+  toast(circ[i]+" "+STEPS[i].t+" 발송 처리됨");
+}
+function unsendStep(id,i){
+  var c=DATA.find(function(x){return x.id===id;}); if(!c)return;
+  c.steps[i].sent=false; c.steps[i].at=null; c.steps[i].resp=null; save(); render(); renderDetail(id);
+}
+function setResp(id,i,val){
+  var c=DATA.find(function(x){return x.id===id;}); if(!c)return;
+  c.steps[i].resp = (c.steps[i].resp===val? null : val);
+  save(); render(); renderDetail(id);
+}
+
+/* ===== 추가/수정 ===== */
+function openForm(id){
+  var isEdit = !!id;
+  document.getElementById("formTitle").textContent = isEdit? "고객/현장 정보 수정":"고객/현장 추가";
+  var c = isEdit? DATA.find(function(x){return x.id===id;}) : null;
+  document.getElementById("f_id").value = isEdit? id:"";
+  document.getElementById("f_name").value = c?c.name:"";
+  document.getElementById("f_title").value = c?c.title:"사장님";
+  document.getElementById("f_phone").value = c?c.phone:"";
+  document.getElementById("f_amount").value = c?(c.amount||""):"";
+  document.getElementById("f_address").value = c?c.address:"";
+  document.getElementById("f_partner").value = c?(c.partner||""):"";
+  document.getElementById("f_memo").value = c?(c.memo||""):"";
+  document.getElementById("formOverlay").classList.add("open");
+  setTimeout(function(){ document.getElementById("f_name").focus(); },50);
+}
+function saveForm(){
+  var name = document.getElementById("f_name").value.trim();
+  if(!name){ toast("고객명을 입력하세요."); document.getElementById("f_name").focus(); return; }
+  var id = document.getElementById("f_id").value;
+  var obj = {
+    name:name,
+    title:document.getElementById("f_title").value,
+    phone:document.getElementById("f_phone").value.trim(),
+    amount:document.getElementById("f_amount").value? Number(document.getElementById("f_amount").value):null,
+    address:document.getElementById("f_address").value.trim(),
+    partner:document.getElementById("f_partner").value.trim(),
+    memo:document.getElementById("f_memo").value.trim()
+  };
+  if(id){
+    var c=DATA.find(function(x){return x.id===id;});
+    Object.assign(c, obj);
+    toast("수정되었습니다.");
+  }else{
+    obj.id=uid(); obj.steps=blankSteps(); obj.createdAt=nowStr();
+    DATA.unshift(obj);
+    toast("새 현장이 추가되었습니다.");
+  }
+  save(); render();
+  document.getElementById("formOverlay").classList.remove("open");
+  if(id && document.getElementById("detailOverlay").classList.contains("open")) renderDetail(id);
+}
+function delCustomer(id){
+  if(!confirm("이 현장을 삭제할까요? 되돌릴 수 없습니다.")) return;
+  DATA = DATA.filter(function(x){return x.id!==id;});
+  save(); render();
+  document.getElementById("detailOverlay").classList.remove("open");
+  toast("삭제되었습니다.");
+}
+
+/* ===== 토스트 ===== */
+var toastTimer;
+function toast(msg){
+  var t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(function(){ t.classList.remove("show"); },2200);
+}
+
+/* ===== 이벤트 ===== */
+document.getElementById("addBtn").onclick=function(){ openForm(null); };
+document.getElementById("saveBtn").onclick=saveForm;
+document.getElementById("search").oninput=render;
+document.getElementById("filterStage").onchange=render;
+document.getElementById("editBtn").onclick=function(){ if(detailId) openForm(detailId); };
+document.getElementById("delBtn").onclick=function(){ if(detailId) delCustomer(detailId); };
+document.getElementById("seedBtn").onclick=function(){
+  if(!confirm("현재 데이터를 모두 지우고 샘플 데이터로 채울까요?")) return;
+  DATA=seedData(); save(); render(); toast("샘플 데이터로 초기화했습니다.");
+};
+document.querySelectorAll("[data-close]").forEach(function(b){
+  b.onclick=function(){ b.closest(".overlay").classList.remove("open"); };
+});
+document.querySelectorAll(".overlay").forEach(function(o){
+  o.addEventListener("click", function(e){ if(e.target===o) o.classList.remove("open"); });
+});
+document.addEventListener("keydown", function(e){
+  if(e.key==="Escape") document.querySelectorAll(".overlay.open").forEach(function(o){o.classList.remove("open");});
+});
+
+render();
 </script>
 </body>
 </html>
