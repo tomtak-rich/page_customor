@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>철거의정석 · 관리자 사진함</title>
+<style>
+  :root{--bg:#0e1733;--panel:#1a2a57;--panel2:#243b73;--brand:#304cfe;--gold:#e9b949;--text:#fff;--muted:#aebeea;--border:rgba(174,190,234,.18);--ok:#3dd68c}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;line-height:1.5}
+  .top{border-bottom:1px solid var(--border);background:rgba(14,23,51,.92);position:sticky;top:0;z-index:5}.top-in{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:12px}.brand{font-weight:800}.dot{width:9px;height:9px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 4px rgba(48,76,254,.18)}.spacer{flex:1}
+  a,.btn{border:1px solid var(--border);background:var(--panel);color:#fff;text-decoration:none;border-radius:10px;padding:9px 12px;font-weight:700;font-size:13px;cursor:pointer}.btn.primary{background:var(--brand);border-color:var(--brand)}
+  main{max-width:1200px;margin:0 auto;padding:22px 20px 44px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}.stat{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:15px}.stat span{display:block;color:var(--muted);font-size:12px;font-weight:700}.stat strong{display:block;font-size:28px;line-height:1.1;margin-top:4px}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}.field{border:1px solid var(--border);background:var(--panel);color:#fff;border-radius:10px;padding:10px 12px;min-width:220px;outline:none}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden}.card.confirmed{opacity:.72}.card img{width:100%;aspect-ratio:4/3;object-fit:cover;background:#091126}.body{padding:13px}.meta{display:grid;gap:3px}.title{font-weight:800}.sub,.memo{color:var(--muted);font-size:13px}.memo{margin-top:8px}.badge{display:inline-flex;border:1px solid rgba(233,185,73,.45);color:#f4d488;background:rgba(233,185,73,.13);border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800;margin-top:10px}.badge.ok{border-color:rgba(61,214,140,.4);color:#aaf1ca;background:rgba(61,214,140,.13)}
+  .actions{display:flex;gap:8px;margin-top:12px}.actions .btn{flex:1}.empty{padding:60px 20px;text-align:center;color:var(--muted);border:1px solid var(--border);border-radius:12px;background:var(--panel)}
+  @media(max-width:720px){.stats{grid-template-columns:1fr}.top-in{flex-wrap:wrap}.field{width:100%;min-width:0}}
+</style>
+</head>
+<body>
+<div class="top"><div class="top-in"><span class="dot"></span><div class="brand">철거의정석 · 관리자 사진함</div><div class="spacer"></div><a href="/admin">대시보드</a><a href="/upload">업체 업로드</a></div></div>
+<main>
+  <div class="stats">
+    <div class="stat"><span>전체 사진</span><strong id="total">0</strong></div>
+    <div class="stat"><span>미확인</span><strong id="pending">0</strong></div>
+    <div class="stat"><span>확인 완료</span><strong id="done">0</strong></div>
+  </div>
+  <div class="toolbar">
+    <input class="field" id="search" placeholder="업체명·현장명·주소 검색" />
+    <select class="field" id="filter"><option value="">전체</option><option value="pending">미확인</option><option value="done">확인 완료</option></select>
+    <button class="btn primary" id="reload">새로고침</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" style="display:none">업로드된 사진이 없습니다.</div>
+</main>
+<script>
+let photos = [];
+const grid = document.getElementById("grid");
+const empty = document.getElementById("empty");
+const search = document.getElementById("search");
+const filter = document.getElementById("filter");
+
+async function load() {
+  const res = await fetch("/api/photos");
+  const data = await res.json();
+  photos = data.photos || [];
+  render();
+}
+
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"]/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[m]));
+}
+
+function render() {
+  const q = search.value.trim().toLowerCase();
+  const f = filter.value;
+  const rows = photos.filter(photo => {
+    if (f === "pending" && photo.confirmed) return false;
+    if (f === "done" && !photo.confirmed) return false;
+    if (!q) return true;
+    return `${photo.company} ${photo.site_name} ${photo.address} ${photo.memo}`.toLowerCase().includes(q);
+  });
+
+  document.getElementById("total").textContent = photos.length;
+  document.getElementById("pending").textContent = photos.filter(p => !p.confirmed).length;
+  document.getElementById("done").textContent = photos.filter(p => p.confirmed).length;
+
+  grid.innerHTML = "";
+  empty.style.display = rows.length ? "none" : "block";
+  rows.forEach(photo => {
+    const card = document.createElement("article");
+    card.className = "card" + (photo.confirmed ? " confirmed" : "");
+    card.innerHTML = `
+      <a href="${photo.url}" target="_blank" style="display:block;padding:0;border:0;border-radius:0;background:transparent"><img src="${photo.url}" alt=""></a>
+      <div class="body">
+        <div class="meta">
+          <div class="title">${esc(photo.company)} · ${esc(photo.site_name)}</div>
+          <div class="sub">${esc(photo.address || "주소 없음")}</div>
+          <div class="sub">${esc(photo.created_at)} · ${Math.round(photo.size / 1024).toLocaleString("ko-KR")}KB</div>
+        </div>
+        ${photo.memo ? `<div class="memo">${esc(photo.memo)}</div>` : ""}
+        <div class="badge ${photo.confirmed ? "ok" : ""}">${photo.confirmed ? "확인 완료" : "미확인"}</div>
+        <div class="actions">
+          <button class="btn primary" data-id="${photo.id}" data-confirm="${photo.confirmed ? "0" : "1"}">${photo.confirmed ? "미확인으로 변경" : "확인 완료"}</button>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+  grid.querySelectorAll("[data-id]").forEach(btn => {
+    btn.onclick = async () => {
+      await fetch(`/api/photos/${btn.dataset.id}/confirm`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmed: btn.dataset.confirm === "1" })
+      });
+      await load();
+    };
+  });
+}
+
+search.oninput = render;
+filter.onchange = render;
+document.getElementById("reload").onclick = load;
+load();
+</script>
+</body>
+</html>

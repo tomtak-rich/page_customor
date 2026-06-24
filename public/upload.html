@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>철거의정석 · 업체 사진 업로드</title>
+<style>
+  :root{--bg:#0e1733;--panel:#1a2a57;--panel2:#243b73;--brand:#304cfe;--gold:#e9b949;--text:#fff;--muted:#aebeea;--border:rgba(174,190,234,.2);--ok:#3dd68c;--danger:#f2617a}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;line-height:1.5}
+  .top{border-bottom:1px solid var(--border);background:rgba(14,23,51,.92);position:sticky;top:0}
+  .top-in{max-width:860px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;gap:10px}.dot{width:9px;height:9px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 4px rgba(48,76,254,.18)}.brand{font-weight:800}.brand small{display:block;color:var(--muted);font-size:12px;font-weight:600}
+  main{max-width:860px;margin:0 auto;padding:24px 20px 44px}.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;box-shadow:0 8px 28px rgba(0,0,0,.28)}
+  h1{font-size:24px;margin:0 0 6px} p{margin:0;color:var(--muted)} form{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}.full{grid-column:1/-1}
+  label{display:block;color:var(--muted);font-size:13px;font-weight:700;margin-bottom:6px}.field{width:100%;border:1px solid var(--border);background:var(--panel2);color:#fff;border-radius:10px;padding:11px 12px;font-size:15px;outline:none}.field:focus{border-color:var(--brand)} textarea.field{min-height:88px;resize:vertical}
+  .drop{border:1px dashed rgba(174,190,234,.42);background:rgba(36,59,115,.55);border-radius:12px;padding:18px}.drop input{width:100%;color:var(--muted)}
+  .btn{border:0;background:var(--brand);color:#fff;border-radius:10px;padding:12px 16px;font-weight:800;font-size:15px;cursor:pointer}.btn:disabled{opacity:.55;cursor:not-allowed}
+  .note{font-size:13px;color:var(--muted);margin-top:8px}.result{display:none;margin-top:16px;padding:13px 14px;border-radius:10px;border:1px solid rgba(61,214,140,.35);background:rgba(61,214,140,.12);color:#bff6d8}.error{border-color:rgba(242,97,122,.45);background:rgba(242,97,122,.12);color:#ffd4dc}.preview{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:12px}.preview img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:1px solid var(--border)}
+  @media(max-width:640px){form{grid-template-columns:1fr}.panel{padding:18px}h1{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="top"><div class="top-in"><span class="dot"></span><div class="brand">철거의정석 <small>업체 사진 업로드</small></div></div></div>
+<main>
+  <section class="panel">
+    <h1>현장 사진 업로드</h1>
+    <p>업체명과 현장명을 입력하고 사진을 올리면 본사 관리자 화면에 바로 등록됩니다.</p>
+    <form id="uploadForm">
+      <div><label>업체명</label><input class="field" name="company" required placeholder="예: 정석철거" /></div>
+      <div><label>현장명</label><input class="field" name="site_name" required placeholder="예: 강남 상가 2층" /></div>
+      <div class="full"><label>현장 주소</label><input class="field" name="address" placeholder="주소를 입력하세요" /></div>
+      <div class="full"><label>메모</label><textarea class="field" name="memo" placeholder="공정, 특이사항, 촬영 위치 등"></textarea></div>
+      <div class="full">
+        <label>사진</label>
+        <div class="drop"><input id="photos" name="photos" type="file" accept="image/*" multiple required /><div class="note">여러 장 선택 가능 · 한 번에 최대 50MB</div></div>
+        <div class="preview" id="preview"></div>
+      </div>
+      <div class="full"><button class="btn" id="submitBtn" type="submit">사진 업로드</button></div>
+    </form>
+    <div class="result" id="result"></div>
+  </section>
+</main>
+<script>
+const form = document.getElementById("uploadForm");
+const photos = document.getElementById("photos");
+const preview = document.getElementById("preview");
+const result = document.getElementById("result");
+const submitBtn = document.getElementById("submitBtn");
+
+photos.addEventListener("change", () => {
+  preview.innerHTML = "";
+  [...photos.files].forEach(file => {
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    img.onload = () => URL.revokeObjectURL(img.src);
+    preview.appendChild(img);
+  });
+});
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  result.style.display = "none";
+  submitBtn.disabled = true;
+  submitBtn.textContent = "업로드 중";
+  try {
+    const res = await fetch("/api/photos", { method: "POST", body: new FormData(form) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "업로드 실패");
+    result.className = "result";
+    result.textContent = `${data.count}장 업로드가 완료되었습니다.`;
+    result.style.display = "block";
+    form.reset();
+    preview.innerHTML = "";
+  } catch (err) {
+    result.className = "result error";
+    result.textContent = err.message;
+    result.style.display = "block";
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "사진 업로드";
+  }
+});
+</script>
+</body>
+</html>
