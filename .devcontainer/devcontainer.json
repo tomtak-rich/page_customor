@@ -1,0 +1,12 @@
+{
+  "name": "page_customor",
+  "image": "mcr.microsoft.com/devcontainers/universal:2-linux",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "철거의정석 서버",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "postStartCommand": "bash .devcontainer/start-server.sh"
+}
